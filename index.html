@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Review Sentiment Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="config.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sentiment-positive {
+            color: #22c55e; /* green-500 */
+        }
+        .sentiment-negative {
+            color: #ef4444; /* red-500 */
+        }
+        .sentiment-neutral {
+            color: #64748b; /* slate-500 */
+        }
+        .loader {
+            border-top-color: #3498db;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+        }
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-3xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">Movie Sentiment Analyzer</h1>
+            <p class="text-slate-400">Enter a movie title to fetch and analyze its reviews.</p>
+        </header>
+
+        <!-- Search Form -->
+        <div class="bg-slate-800 rounded-lg shadow-xl p-6 mb-8">
+            <div class="flex flex-col sm:flex-row gap-4">
+                <input type="text" id="movie-title-input" class="flex-grow bg-slate-700 text-white placeholder-slate-400 border border-slate-600 rounded-md py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg" placeholder="e.g., The Matrix">
+                <button id="analyze-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-md text-lg transition-colors duration-300 flex items-center justify-center">
+                    <svg id="button-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+                    <span>Analyze</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Area -->
+        <div id="results-container" class="space-y-6">
+            <!-- Loading Spinner -->
+            <div id="loader" class="hidden text-center">
+                <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-500 h-12 w-12 mx-auto mb-4"></div>
+                <p class="text-lg text-slate-400" id="loading-status">Searching for the movie...</p>
+            </div>
+            
+            <!-- Error Message -->
+            <div id="error-message" class="hidden bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-center"></div>
+
+            <!-- Summary Card -->
+            <div id="summary-card" class="hidden bg-slate-800 rounded-lg shadow-xl p-6">
+                 <h2 id="movie-title-display" class="text-3xl font-bold text-white mb-4"></h2>
+                 <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="text-center">
+                        <p class="text-slate-400 text-sm font-medium">OVERALL SENTIMENT</p>
+                        <p id="overall-sentiment" class="text-4xl font-bold"></p>
+                    </div>
+                    <div class="w-full md:w-auto flex justify-around gap-4">
+                         <div class="text-center p-4 bg-slate-700/50 rounded-lg">
+                            <p class="text-slate-400 text-sm font-medium">POSITIVE</p>
+                            <p id="positive-count" class="text-2xl font-semibold sentiment-positive"></p>
+                        </div>
+                        <div class="text-center p-4 bg-slate-700/50 rounded-lg">
+                            <p class="text-slate-400 text-sm font-medium">NEGATIVE</p>
+                            <p id="negative-count" class="text-2xl font-semibold sentiment-negative"></p>
+                        </div>
+                        <div class="text-center p-4 bg-slate-700/50 rounded-lg">
+                            <p class="text-slate-400 text-sm font-medium">REVIEWS</p>
+                            <p id="total-reviews" class="text-2xl font-semibold"></p>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+
+            <!-- Individual Reviews -->
+            <div id="reviews-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        const movieTitleInput = document.getElementById('movie-title-input');
+        const analyzeButton = document.getElementById('analyze-button');
+        const resultsContainer = document.getElementById('results-container');
+        const loader = document.getElementById('loader');
+        const loadingStatus = document.getElementById('loading-status');
+        const errorMessage = document.getElementById('error-message');
+        const summaryCard = document.getElementById('summary-card');
+        const movieTitleDisplay = document.getElementById('movie-title-display');
+        const overallSentiment = document.getElementById('overall-sentiment');
+        const positiveCountEl = document.getElementById('positive-count');
+        const negativeCountEl = document.getElementById('negative-count');
+        const totalReviewsEl = document.getElementById('total-reviews');
+        const reviewsList = document.getElementById('reviews-list');
+        
+
+        // Get TMDb API key from config
+        const TMDb_API_KEY = window.CONFIG ? window.CONFIG.TMDB_API_KEY : 'YOUR_API_KEY_HERE';
+
+        analyzeButton.addEventListener('click', handleAnalysis);
+        movieTitleInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                handleAnalysis();
+            }
+        });
+
+        async function handleAnalysis() {
+            const movieTitle = movieTitleInput.value.trim();
+            if (!movieTitle) {
+                showError("Please enter a movie title.");
+                return;
+            }
+            
+            if (TMDb_API_KEY === 'YOUR_API_KEY_HERE') {
+                 showError("Please add your TMDb API key to the script.");
+                 return;
+            }
+
+            resetUI();
+            setLoading(true, 'Searching for movie...');
+
+            try {
+                // Step 1: Search for the movie to get its ID
+                const movie = await findMovie(movieTitle);
+                if (!movie) {
+                    showError(`Could not find a movie named "${movieTitle}".`);
+                    return;
+                }
+                movieTitleDisplay.textContent = movie.title;
+                setLoading(true, `Found "${movie.title}". Fetching reviews...`);
+
+                // Step 2: Fetch reviews for that movie ID
+                const reviews = await getMovieReviews(movie.id);
+                if (reviews.length === 0) {
+                    showError(`No reviews found for "${movie.title}".`);
+                    return;
+                }
+                setLoading(true, `Analyzing ${reviews.length} reviews...`);
+
+                // Step 3: Analyze sentiment for each review
+                const analyzedReviews = await analyzeAllReviews(reviews);
+
+                // Step 4: Display the results
+                displayResults(analyzedReviews);
+
+            } catch (error) {
+                console.error("An error occurred:", error);
+                showError("An unexpected error occurred. Please check the console.");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function findMovie(query) {
+            const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDb_API_KEY}&query=${encodeURIComponent(query)}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Failed to search for movie.");
+            const data = await response.json();
+            return data.results[0]; // Return the top result
+        }
+
+        async function getMovieReviews(movieId) {
+            const url = `https://api.themoviedb.org/3/movie/${movieId}/reviews?api_key=${TMDb_API_KEY}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Failed to fetch reviews.");
+            const data = await response.json();
+            return data.results;
+        }
+
+        /**
+         * This function simulates calling your backend sentiment analysis model.
+         * For this demo, it uses a simple keyword-based approach.
+         * In a real application, you would replace this with a fetch() call to your API.
+         * e.g., fetch('http://127.0.0.1:8000/predict', { method: 'POST', ... })
+         */
+        // DELETE the old predictSentiment function and REPLACE it with this one.
+        async function predictSentiment(text) {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text }) // Send the review text to your API
+                });
+
+                if (!response.ok) {
+                    // If the server responds with an error, handle it
+                    console.error("API call failed with status:", response.status);
+                    return "Neutral"; // Fallback to Neutral on error
+                }
+
+                const data = await response.json(); // Get the JSON response {"review": "...", "sentiment": "Positive"}
+                return data.sentiment; // Return "Positive" or "Negative" from your real model
+
+            } catch (error) {
+                // If there's a network error (e.g., the server isn't running)
+                console.error("Could not connect to the sentiment analysis API.", error);
+                // You could show an error message to the user here
+                showError("Error: Could not connect to the backend analysis server. Is it running?");
+                throw error; // Stop further execution
+            }
+        }
+        
+        async function analyzeAllReviews(reviews) {
+            const analysisPromises = reviews.map(async (review) => {
+                const sentiment = await predictSentiment(review.content);
+                return { ...review, sentiment };
+            });
+            return Promise.all(analysisPromises);
+        }
+
+        function displayResults(analyzedReviews) {
+            let positiveCount = 0;
+            let negativeCount = 0;
+
+            reviewsList.innerHTML = ''; // Clear previous reviews
+
+            analyzedReviews.forEach(review => {
+                if (review.sentiment === "Positive") positiveCount++;
+                if (review.sentiment === "Negative") negativeCount++;
+                
+                const reviewCard = document.createElement('div');
+                reviewCard.className = 'bg-slate-800 p-5 rounded-lg shadow-lg';
+                reviewCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-lg text-white">by ${review.author}</h3>
+                        <span class="sentiment-${review.sentiment.toLowerCase()} font-semibold text-sm px-3 py-1 bg-slate-700 rounded-full">${review.sentiment}</span>
+                    </div>
+                    <p class="text-slate-300 leading-relaxed">${truncateText(review.content, 400)}</p>
+                `;
+                reviewsList.appendChild(reviewCard);
+            });
+            
+            // Update summary card
+            const total = analyzedReviews.length;
+            positiveCountEl.textContent = positiveCount;
+            negativeCountEl.textContent = negativeCount;
+            totalReviewsEl.textContent = total;
+
+            if (positiveCount > negativeCount) {
+                overallSentiment.textContent = "Positive";
+                overallSentiment.className = "text-4xl font-bold sentiment-positive";
+            } else if (negativeCount > positiveCount) {
+                overallSentiment.textContent = "Negative";
+                overallSentiment.className = "text-4xl font-bold sentiment-negative";
+            } else {
+                overallSentiment.textContent = "Mixed";
+                overallSentiment.className = "text-4xl font-bold sentiment-neutral";
+            }
+            summaryCard.classList.remove('hidden');
+        }
+        
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substr(0, maxLength) + '...';
+        }
+
+        function resetUI() {
+            errorMessage.classList.add('hidden');
+            summaryCard.classList.add('hidden');
+            reviewsList.innerHTML = '';
+            movieTitleInput.value = '';
+        }
+
+        function setLoading(isLoading, status = '') {
+            if (isLoading) {
+                loader.classList.remove('hidden');
+                loadingStatus.textContent = status;
+                analyzeButton.disabled = true;
+                analyzeButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                loader.classList.add('hidden');
+                analyzeButton.disabled = false;
+                analyzeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        function showError(message) {
+            setLoading(false);
+            summaryCard.classList.add('hidden');
+            reviewsList.innerHTML = '';
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+    </script>
+</body>
+</html>

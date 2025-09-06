@@ -1,0 +1,280 @@
+# ============================================================================
+# SENSITIVE FILES - DO NOT COMMIT TO PUBLIC REPOSITORIES
+# ============================================================================
+
+# API Keys and Configuration Files
+*.env
+.env
+.env.local
+.env.production
+config.json
+config.js
+secrets.json
+
+# TMDb API Key (if stored in separate file)
+api_keys.txt
+tmdb_api_key.txt
+
+# ============================================================================
+# MACHINE LEARNING MODEL FILES (Large files)
+# ============================================================================
+
+# Trained model files (these are large and can be regenerated)
+*.pkl
+*.joblib
+*.h5
+*.pb
+*.onnx
+model_metadata.pkl
+sentiment_svm_model.pkl
+
+# Word embeddings and large datasets
+*.bin
+*.vec
+*.txt.gz
+glove.*
+word2vec.*
+
+# ============================================================================
+# PYTHON
+# ============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.virtualenv
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+.idea/
+
+# ============================================================================
+# JUPYTER NOTEBOOKS
+# ============================================================================
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# ============================================================================
+# DATA FILES
+# ============================================================================
+
+# Large datasets
+*.csv
+*.tsv
+*.json
+*.jsonl
+*.parquet
+*.feather
+*.hdf5
+
+# Except small example/sample files
+!sample_*.csv
+!example_*.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================================================
+# SYSTEM FILES
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# ============================================================================
+# IDE AND EDITOR FILES
+# ============================================================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ============================================================================
+# LOGS AND TEMPORARY FILES
+# ============================================================================
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary folders
+tmp/
+temp/
+.tmp/
+
+# ============================================================================
+# NLTK DATA (Optional - can be large)
+# ============================================================================
+
+# NLTK data directory (uncomment if you don't want to include downloaded NLTK data)
+# nltk_data/
+
+# ============================================================================
+# GENSIM CACHE
+# ============================================================================
+
+# Gensim downloaded models cache
+gensim-data/
+
+# ============================================================================
+# PROJECT-SPECIFIC EXCLUSIONS
+# ============================================================================
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Generated documentation
+docs/_build/
+
+# Test files
+test_output/
+test_results/
+
+# Cache directories
+.cache/
+cache/
+
+# Local environment configuration
+local_config.py
+settings_local.py
